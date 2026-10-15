@@ -12,6 +12,11 @@
 // 관리자 결과 화면(admin.html)의 비밀번호는 코드가 아니라
 // [프로젝트 설정 → 스크립트 속성]에 ADMIN_PASSWORD 라는 이름으로 넣습니다.
 // (그래서 이 파일은 GitHub에 그대로 올려도 비밀번호가 드러나지 않습니다.)
+// 구글 시트의 [확장 프로그램 → Apps Script]에서 만든 경우: 비워 두세요.
+// script.google.com에서 따로 만든 프로젝트라면: 결과를 저장할 시트 주소의
+// /d/ 와 /edit 사이 글자(시트 ID)를 넣으세요.
+const SPREADSHEET_ID = "";
+
 const SHEETS = { oral: "구두발표", poster: "포스터발표" };
 const LOG_SHEET = "제출기록";
 const GRADES = ["A", "B", "C", "D", "E"];
@@ -65,7 +70,7 @@ function submit_(req) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) return { ok: false, error: "busy" };
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = spreadsheet_();
     const sheet = getSheet_(ss, sheetName);
     const headers = FIXED_HEADERS.concat(criteria, ["의견"]);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight("bold");
@@ -103,7 +108,7 @@ function results_(req) {
   if (!adminPassword) return { ok: false, error: "password_not_set" };
   if (String(req.password || "") !== adminPassword) return { ok: false, error: "bad_password" };
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = spreadsheet_();
   const data = {};
   Object.keys(SHEETS).forEach((type) => {
     data[type] = [];
@@ -130,6 +135,10 @@ function results_(req) {
 }
 
 /* ── 도우미 ──────────────────────────────────────────────────── */
+function spreadsheet_() {
+  return SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+}
+
 function getSheet_(ss, name) {
   return ss.getSheetByName(name) || ss.insertSheet(name);
 }
@@ -149,7 +158,7 @@ function cell_(value) {
 
 function unescape_(value) {
   const s = String(value == null ? "" : value);
-  return /^'[=+\-@]/.test(s) ? s.slice(1) : s;
+  return s.charAt(0) === "'" && /^[=+\-@]/.test(s.slice(1)) ? s.slice(1) : s;
 }
 
 function json_(obj) {

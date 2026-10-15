@@ -38,6 +38,13 @@
 
 ## 2. 구글 시트 연결 (처음 한 번)
 
+> **현재 연결 상태 (2026-10-15)**
+> - 결과 시트: BAT Lab 구글 드라이브의 `제3회 학술제 심사결과`
+> - Apps Script 프로젝트: `학술제 심사 결과 수집` (script.google.com에서 독립 프로젝트로 만들고, 코드의 `SPREADSHEET_ID`에 위 시트 ID를 넣음)
+> - 관리자 비밀번호: 프로젝트 설정 → 스크립트 속성 `ADMIN_PASSWORD`
+>
+> 아래는 처음부터 새로 연결할 때의 순서입니다. 시트에서 [확장 프로그램 → Apps Script]로 만들면 `SPREADSHEET_ID`는 비워 두면 됩니다.
+
 1. [Google 스프레드시트](https://sheets.google.com)에서 빈 시트를 새로 만듭니다. (예: `제3회 학술제 심사결과`)
 2. 메뉴 **확장 프로그램 → Apps Script**를 엽니다.
 3. 편집기에 있는 `Code.gs` 내용을 모두 지우고, 이 폴더의 `apps-script/Code.gs` 내용을 붙여 넣은 뒤 저장(💾)합니다.

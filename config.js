@@ -18,7 +18,7 @@ window.EVAL_CONFIG = {
    *  예) "https://script.google.com/macros/s/AKfycb..../exec"
    *  비워 두면 "테스트 모드"로 동작합니다. (제출 결과가 이 브라우저에만 저장됨)
    */
-  appsScriptUrl: "",
+  appsScriptUrl: "https://script.google.com/macros/s/AKfycbwkmmyLE0vKQIMAxIVI-oiedG64UFLiODuWqUBtLLIpvR4kNqCNsuC8-pHVglYXi8BgDg/exec",
 
   /* ── 등급 ─────────────────────────────────────────────────────
    *  등급별 점수는 아래 평가항목마다 points에 적습니다 (심사 기준과 배점표).
