@@ -1,0 +1,479 @@
+/* 심사위원 평가 화면 */
+(() => {
+  "use strict";
+
+  const { config, normalizeName, storage, escapeHtml, formatDateTime, api, presenterCount } = window.EvalCommon;
+
+  const LAST_JUDGE_KEY = "eval:v1:last-judge";
+  const STATUS_LABEL = { done: "완료", partial: "작성 중", skipped: "평가 안 함", empty: "미평가" };
+  const typeKeys = Object.keys(config.types);
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const screens = { start: $("#screen-start"), eval: $("#screen-eval"), done: $("#screen-done") };
+
+  let state = null;      // 현재 심사위원·발표유형의 입력 내용 (이 기기에 자동 저장)
+  let presenters = [];   // 현재 발표유형의 발표자 목록 (부문 순서대로 펼친 것)
+  let commentTimer = null;
+
+  const draftKey = (type, judge) => `eval:v1:draft:${type}:${normalizeName(judge)}`;
+
+  function flattenPresenters(type) {
+    const list = [];
+    config.types[type].categories.forEach((cat, ci) => {
+      cat.presenters.forEach((p) => {
+        list.push({
+          key: `${cat.label}|${p.name}`, index: list.length, categoryIndex: ci,
+          category: cat.label, name: p.name, topic: p.topic || ""
+        });
+      });
+    });
+    return list;
+  }
+
+  function loadState(type, judge) {
+    const saved = storage.get(draftKey(type, judge));
+    const criteriaCount = config.types[type].criteria.length;
+    const entries = {};
+    flattenPresenters(type).forEach((p) => {
+      const prev = saved && saved.entries && saved.entries[p.key];
+      const entry = { grades: new Array(criteriaCount).fill(null), skipped: false, comment: "" };
+      if (prev) {
+        entry.skipped = !!prev.skipped;
+        entry.comment = typeof prev.comment === "string" ? prev.comment : "";
+        // 평가항목 개수가 바뀐 경우 예전 등급은 버린다
+        if (Array.isArray(prev.grades) && prev.grades.length === criteriaCount) {
+          entry.grades = prev.grades.map((g) => (config.grades.includes(g) ? g : null));
+        }
+      }
+      entries[p.key] = entry;
+    });
+    return {
+      type, judge: normalizeName(judge), entries,
+      submittedAt: (saved && saved.submittedAt) || null,
+      updatedAt: (saved && saved.updatedAt) || null
+    };
+  }
+
+  function entryStatus(entry) {
+    if (entry.skipped) return "skipped";
+    const filled = entry.grades.filter(Boolean).length;
+    if (filled === entry.grades.length) return "done";
+    if (filled > 0 || entry.comment.trim()) return "partial";
+    return "empty";
+  }
+
+  const hasAnyInput = (s) => Object.values(s.entries).some((e) => entryStatus(e) !== "empty");
+
+  function persist(touch = true) {
+    if (touch) state.updatedAt = new Date().toISOString();
+    const ok = storage.set(draftKey(state.type, state.judge), state);
+    const status = $("#save-status");
+    status.classList.toggle("is-error", !ok);
+    status.textContent = ok
+      ? (state.updatedAt ? `자동 저장됨 · ${formatDateTime(state.updatedAt)}` : "")
+      : "이 브라우저에서는 자동 저장이 되지 않습니다";
+    updateResubmitNotice();
+  }
+
+  function updateResubmitNotice() {
+    $("#resubmit-notice").hidden = !(state.submittedAt && state.updatedAt && state.updatedAt > state.submittedAt);
+  }
+
+  /* ── 화면 전환 ─────────────────────────────────────────────── */
+  function showScreen(name, { push = false } = {}) {
+    Object.entries(screens).forEach(([key, el]) => { el.hidden = key !== name; });
+    if (push) history.pushState({ screen: name }, "");
+    window.scrollTo(0, 0);
+  }
+
+  // 휴대폰 뒤로가기를 누르면 사이트를 벗어나지 않고 첫 화면으로 돌아간다
+  window.addEventListener("popstate", () => {
+    if (!screens.start.hidden) return;
+    renderStart();
+    showScreen("start");
+  });
+
+  /* ── 1. 첫 화면 ───────────────────────────────────────────── */
+  function renderTypeChoices() {
+    $("#type-choices").innerHTML = typeKeys.map((type) => {
+      const t = config.types[type];
+      const cats = t.categories.length;
+      const meta = cats > 1 ? `${cats}개 부문 · ${presenterCount(type)}명` : `${presenterCount(type)}명`;
+      return `
+        <label class="type-choice">
+          <input type="radio" name="eval-type" value="${type}">
+          <span class="type-choice__box">
+            <span class="type-choice__name">${escapeHtml(t.label)}</span>
+            <span class="type-choice__meta">${meta}</span>
+          </span>
+        </label>`;
+    }).join("");
+  }
+
+  const selectedType = () => {
+    const checked = $('input[name="eval-type"]:checked');
+    return checked ? checked.value : null;
+  };
+
+  function renderStart(prefill = {}) {
+    document.title = `심사 평가 · ${config.eventTitle}`;
+    const nameInput = $("#judge-name");
+    if (prefill.judge != null) nameInput.value = prefill.judge;
+    if (prefill.type) {
+      const radio = $(`input[name="eval-type"][value="${prefill.type}"]`);
+      if (radio) radio.checked = true;
+    }
+    updateStartForm();
+  }
+
+  function updateStartForm() {
+    const judge = normalizeName($("#judge-name").value);
+    const type = selectedType();
+    $("#start-btn").disabled = !(judge && type);
+
+    const notice = $("#start-notice");
+    notice.hidden = true;
+    if (!judge || !type) return;
+    const saved = storage.get(draftKey(type, judge));
+    if (saved && saved.submittedAt) {
+      notice.textContent = `${formatDateTime(saved.submittedAt)}에 제출한 ${config.types[type].label} 평가가 있습니다. 불러와서 수정하고 다시 제출할 수 있습니다.`;
+      notice.hidden = false;
+    } else if (saved && saved.entries && hasAnyInput(loadState(type, judge))) {
+      notice.textContent = "작성하던 평가가 이 기기에 저장되어 있습니다. 이어서 진행합니다.";
+      notice.hidden = false;
+    }
+  }
+
+  $("#judge-name").addEventListener("input", updateStartForm);
+  $("#type-choices").addEventListener("change", updateStartForm);
+  $("#start-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const judge = normalizeName($("#judge-name").value);
+    const type = selectedType();
+    if (!judge || !type) return;
+    storage.set(LAST_JUDGE_KEY, judge);
+    startEvaluation(type, judge);
+  });
+
+  /* ── 2. 평가 화면 ─────────────────────────────────────────── */
+  function startEvaluation(type, judge) {
+    presenters = flattenPresenters(type);
+    state = loadState(type, judge);
+    renderEval();
+    showScreen("eval", { push: true });
+  }
+
+  function renderEval() {
+    const t = config.types[state.type];
+    document.title = `${t.label} 평가 · ${config.eventTitle}`;
+    $("#eval-title").textContent = `${t.label} 평가`;
+    $("#eval-judge").textContent = `${state.judge} 심사위원`;
+
+    const nav = $("#cat-nav");
+    nav.hidden = t.categories.length < 2;
+    nav.innerHTML = t.categories.map((cat, ci) =>
+      `<a href="#cat-${ci}" data-cat="${ci}">${escapeHtml(cat.label)}<span></span></a>`).join("");
+
+    $("#eval-list").innerHTML = t.categories.map((cat, ci) => `
+      <section class="cat-section" id="cat-${ci}">
+        <h2 class="cat-title">${escapeHtml(cat.label)} <small>${cat.presenters.length}명</small></h2>
+        ${presenters.filter((p) => p.categoryIndex === ci).map((p) => presenterCard(p, t)).join("")}
+      </section>`).join("");
+
+    presenters.forEach(updateCard);
+    updateProgress();
+    persist(false);
+  }
+
+  function presenterCard(p, t) {
+    const entry = state.entries[p.key];
+    const criteria = t.criteria.map((c, ci) => {
+      const labelId = `p${p.index}-c${ci}-label`;
+      const options = config.grades.map((g) => `
+        <label class="grade">
+          <input type="radio" name="p${p.index}-c${ci}" value="${g}" data-ci="${ci}"${entry.grades[ci] === g ? " checked" : ""}>
+          <span>${g}</span>
+        </label>`).join("");
+      return `
+        <div class="criterion" role="radiogroup" aria-labelledby="${labelId}">
+          <div class="criterion__label" id="${labelId}">${escapeHtml(c.label)}<span class="criterion__max">${c.max}점</span></div>
+          <div class="grades">${options}</div>
+        </div>`;
+    }).join("");
+
+    return `
+      <article class="card pcard" id="p-${p.index}" data-index="${p.index}">
+        <div class="pcard__head">
+          <div class="pcard__who">
+            <span class="pcard__no">${p.index + 1}</span>
+            <div>
+              <h3 class="pcard__name">${escapeHtml(p.name)}</h3>
+              ${p.topic ? `<p class="pcard__topic">${escapeHtml(p.topic)}</p>` : ""}
+            </div>
+          </div>
+          <span class="pill" data-role="status"></span>
+        </div>
+        <div class="pcard__body">
+          ${criteria}
+          <p class="skip-note">평가하지 않는 발표자입니다. 이 심사위원의 점수는 평균 계산에서 빠집니다.</p>
+          <label class="comment">
+            <span class="comment__label">${escapeHtml(t.commentLabel || "의견")} (선택)</span>
+            <textarea class="textarea" data-role="comment" rows="2" maxlength="1000">${escapeHtml(entry.comment)}</textarea>
+          </label>
+        </div>
+        <div class="pcard__foot">
+          <button type="button" class="btn-link" data-action="clear">선택 초기화</button>
+          <button type="button" class="btn btn-sm btn-toggle" data-action="skip" aria-pressed="false">평가 안 함</button>
+        </div>
+      </article>`;
+  }
+
+  function updateCard(p) {
+    const card = $(`#p-${p.index}`);
+    const entry = state.entries[p.key];
+    const status = entryStatus(entry);
+    const pill = $('[data-role="status"]', card);
+    pill.textContent = STATUS_LABEL[status];
+    pill.className = `pill pill--${status}`;
+    card.classList.toggle("is-done", status === "done");
+    card.classList.toggle("is-skipped", status === "skipped");
+    if (status === "done" || status === "skipped") card.classList.remove("is-attention");
+    $('[data-action="skip"]', card).setAttribute("aria-pressed", String(entry.skipped));
+    $$('input[type="radio"]', card).forEach((input) => { input.disabled = entry.skipped; });
+  }
+
+  function updateProgress() {
+    const finished = presenters.filter((p) => ["done", "skipped"].includes(entryStatus(state.entries[p.key]))).length;
+    $("#progress-text").textContent = `${finished} / ${presenters.length}`;
+    $("#progress-fill").style.width = `${presenters.length ? (finished / presenters.length) * 100 : 0}%`;
+
+    $$("#cat-nav a").forEach((a) => {
+      const ci = Number(a.dataset.cat);
+      const inCat = presenters.filter((p) => p.categoryIndex === ci);
+      const doneInCat = inCat.filter((p) => ["done", "skipped"].includes(entryStatus(state.entries[p.key]))).length;
+      a.querySelector("span").textContent = `${doneInCat}/${inCat.length}`;
+      a.classList.toggle("is-complete", doneInCat === inCat.length);
+    });
+  }
+
+  const presenterOf = (el) => {
+    const card = el.closest(".pcard");
+    return card ? presenters[Number(card.dataset.index)] : null;
+  };
+
+  const evalList = $("#eval-list");
+
+  evalList.addEventListener("change", (e) => {
+    const input = e.target;
+    if (input.type !== "radio") return;
+    const p = presenterOf(input);
+    state.entries[p.key].grades[Number(input.dataset.ci)] = input.value;
+    updateCard(p);
+    updateProgress();
+    persist();
+  });
+
+  evalList.addEventListener("input", (e) => {
+    if (e.target.dataset.role !== "comment") return;
+    const p = presenterOf(e.target);
+    state.entries[p.key].comment = e.target.value;
+    updateCard(p);
+    updateProgress();
+    clearTimeout(commentTimer);
+    commentTimer = setTimeout(() => persist(), 400);
+  });
+
+  evalList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    const p = presenterOf(btn);
+    const entry = state.entries[p.key];
+    if (btn.dataset.action === "skip") {
+      entry.skipped = !entry.skipped;
+    } else if (btn.dataset.action === "clear") {
+      entry.grades = entry.grades.map(() => null);
+      entry.skipped = false;
+      $$('input[type="radio"]', $(`#p-${p.index}`)).forEach((input) => { input.checked = false; });
+    }
+    updateCard(p);
+    updateProgress();
+    persist();
+  });
+
+  // 부문 바로가기: 주소창에 #을 남기지 않고 부드럽게 이동
+  $("#cat-nav").addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    $(`#cat-${a.dataset.cat}`).scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  function focusCard(p) {
+    const card = $(`#p-${p.index}`);
+    card.classList.add("is-attention");
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ── 제출 ─────────────────────────────────────────────────── */
+  const nameList = (items) => `<ul>${items.map(({ p }) =>
+    `<li><b>${escapeHtml(p.name)}</b> <span class="muted small">${escapeHtml(p.category)}</span></li>`).join("")}</ul>`;
+
+  async function onSubmit() {
+    clearTimeout(commentTimer);
+    const t = config.types[state.type];
+    const rows = presenters.map((p) => ({ p, status: entryStatus(state.entries[p.key]) }));
+    const partial = rows.filter((r) => r.status === "partial");
+    const done = rows.filter((r) => r.status === "done");
+    const empty = rows.filter((r) => r.status === "empty");
+    const skippedCount = rows.length - done.length;
+
+    if (partial.length) {
+      await showDialog({
+        title: "평가가 끝나지 않은 발표자가 있습니다",
+        body: `<p>아래 발표자의 모든 항목을 선택하거나, 평가하지 않을 경우 <b>평가 안 함</b>을 눌러 주세요.</p>${nameList(partial)}`,
+        actions: [{ label: "확인", value: true, primary: true }]
+      });
+      partial.forEach((r) => $(`#p-${r.p.index}`).classList.add("is-attention"));
+      focusCard(partial[0].p);
+      return;
+    }
+    if (!done.length) {
+      await showDialog({
+        title: "평가한 발표자가 없습니다",
+        body: "<p>한 명 이상 평가한 뒤 제출해 주세요.</p>",
+        actions: [{ label: "확인", value: true, primary: true }]
+      });
+      return;
+    }
+
+    let body = `<p>평가 <b>${done.length}명</b>${skippedCount ? ` · 평가 안 함 <b>${skippedCount}명</b>` : ""}</p>`;
+    if (empty.length) {
+      body += `<div class="notice notice--warn">아직 평가하지 않은 발표자가 있습니다. <b>평가 안 함</b>으로 처리하고 제출합니다.${nameList(empty)}</div>`;
+    }
+    body += `<p class="muted small">제출한 뒤에도 같은 이름으로 다시 제출하면 최신 내용으로 바뀝니다.</p>`;
+
+    const confirmed = await showDialog({
+      title: `${t.label} 평가를 제출할까요?`,
+      body,
+      actions: [
+        { label: "취소", value: false },
+        { label: empty.length ? "평가 안 함으로 처리하고 제출" : "제출", value: true, primary: true }
+      ]
+    });
+    if (!confirmed) return;
+
+    empty.forEach(({ p }) => { state.entries[p.key].skipped = true; updateCard(p); });
+    updateProgress();
+    persist();
+
+    const btn = $("#submit-btn");
+    btn.disabled = true;
+    btn.textContent = "제출 중…";
+    try {
+      const res = await api.submit(buildPayload());
+      state.submittedAt = res.savedAt || new Date().toISOString();
+      state.updatedAt = state.submittedAt;
+      persist(false);
+      showDone(done.length, skippedCount);
+    } catch (err) {
+      await showDialog({
+        title: "제출하지 못했습니다",
+        body: `<p>${escapeHtml(err.message)}</p><p class="muted small">입력한 내용은 이 기기에 저장되어 있으니, 잠시 후 다시 제출해 주세요.</p>`,
+        actions: [{ label: "확인", value: true, primary: true }]
+      });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "제출하기";
+    }
+  }
+
+  function buildPayload() {
+    const t = config.types[state.type];
+    return {
+      type: state.type,
+      judge: state.judge,
+      criteria: t.criteria.map((c) => c.label),
+      rows: presenters.map((p) => {
+        const entry = state.entries[p.key];
+        const skipped = entryStatus(entry) !== "done";
+        return {
+          category: p.category, presenter: p.name, topic: p.topic, skipped,
+          grades: skipped ? [] : entry.grades.slice(), comment: entry.comment.trim()
+        };
+      })
+    };
+  }
+
+  $("#submit-btn").addEventListener("click", onSubmit);
+
+  /* ── 3. 제출 완료 ─────────────────────────────────────────── */
+  function otherType() { return typeKeys.find((k) => k !== state.type); }
+
+  function showDone(doneCount, skippedCount) {
+    const t = config.types[state.type];
+    $("#done-summary").textContent =
+      `${state.judge} 심사위원 · ${t.label} · 평가 ${doneCount}명${skippedCount ? ` · 평가 안 함 ${skippedCount}명` : ""} · ${formatDateTime(state.submittedAt)}`;
+    const other = otherType();
+    const otherBtn = $("#done-other");
+    otherBtn.hidden = !other;
+    if (other) otherBtn.textContent = `${config.types[other].label} 평가하기`;
+    showScreen("done");
+  }
+
+  $("#done-other").addEventListener("click", () => startEvaluation(otherType(), state.judge));
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="home"], [data-action="edit"]');
+    if (!btn) return;
+    if (btn.dataset.action === "edit") {
+      renderEval();
+      showScreen("eval");
+      return;
+    }
+    renderStart({ judge: state ? state.judge : undefined, type: state ? state.type : undefined });
+    showScreen("start");
+  });
+
+  /* ── 대화상자 ─────────────────────────────────────────────── */
+  function showDialog({ title, body, actions }) {
+    return new Promise((resolve) => {
+      const lastFocus = document.activeElement;
+      const backdrop = document.createElement("div");
+      backdrop.className = "modal-backdrop";
+      backdrop.innerHTML = `
+        <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <h2 class="modal__title" id="modal-title">${escapeHtml(title)}</h2>
+          <div class="modal__body">${body}</div>
+          <div class="modal__actions">
+            ${actions.map((a, i) => `<button type="button" class="btn${a.primary ? " btn-primary" : ""}" data-i="${i}">${escapeHtml(a.label)}</button>`).join("")}
+          </div>
+        </div>`;
+      const close = (value) => {
+        document.removeEventListener("keydown", onKey);
+        backdrop.remove();
+        if (lastFocus && lastFocus.focus) lastFocus.focus();
+        resolve(value);
+      };
+      const cancelValue = actions[0].value; // Esc·바깥 클릭 = 첫 번째(취소/확인) 버튼
+      const onKey = (e) => { if (e.key === "Escape") close(cancelValue); };
+      backdrop.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-i]");
+        if (b) close(actions[Number(b.dataset.i)].value);
+        else if (e.target === backdrop) close(cancelValue);
+      });
+      document.addEventListener("keydown", onKey);
+      document.body.appendChild(backdrop);
+      const primary = backdrop.querySelector(".btn-primary") || backdrop.querySelector("button");
+      primary.focus();
+    });
+  }
+
+  /* ── 시작 ─────────────────────────────────────────────────── */
+  $$('[data-bind="event-title"]').forEach((el) => { el.textContent = config.eventTitle; });
+  $("#demo-banner").hidden = !api.isDemo;
+  renderTypeChoices();
+  renderStart({ judge: storage.get(LAST_JUDGE_KEY) || "" });
+  history.replaceState({ screen: "start" }, "");
+})();
