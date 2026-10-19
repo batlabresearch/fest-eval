@@ -129,7 +129,7 @@
         <td class="topic">${escapeHtml(it.topic) || '<span class="dash">–</span>'}</td>
         <td class="num total">${fmt(it.avg)}</td>
         <td class="num">${it.sum == null ? "–" : fmtScore(it.sum)}</td>
-        <td class="num">${it.count}명${it.skippedBy.length ? `<span class="grades-text">평가 안 함 ${it.skippedBy.length}</span>` : ""}</td>
+        <td class="num">${it.count}명${it.skippedBy.length ? `<span class="sub-note">평가 안 함 ${it.skippedBy.length}</span>` : ""}</td>
         ${it.critAvg.map((v) => `<td class="num">${fmt(v)}</td>`).join("")}
       </tr>`).join("");
 

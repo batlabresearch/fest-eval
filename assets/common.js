@@ -46,8 +46,10 @@
 
   /* ── 서버 통신 ───────────────────────────────────────────────
    * appsScriptUrl이 있으면 구글 Apps Script로, 없으면 이 브라우저의
-   * localStorage에 같은 형식으로 저장하는 테스트 모드로 동작한다. */
-  const isDemo = !String(config.appsScriptUrl || "").trim();
+   * localStorage에 같은 형식으로 저장하는 테스트 모드로 동작한다.
+   * 내 컴퓨터(localhost)에서 미리 볼 때도 실제 시트를 건드리지 않도록 테스트 모드로 둔다. */
+  const isLocalPreview = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+  const isDemo = !String(config.appsScriptUrl || "").trim() || isLocalPreview;
 
   const SERVER_ERRORS = {
     bad_password: "관리자 비밀번호가 틀렸습니다.",
