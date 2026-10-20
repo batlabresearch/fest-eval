@@ -184,22 +184,25 @@
 
   <g class="ha-dust">${dust(rand)}</g>
 
-  <g class="ha-trails" stroke="url(#ha-trail)" fill="none" stroke-linecap="round">${trailMarkup}</g>
+  <!-- 빛줄기·광원·건물은 한 묶음: 휴대폰에서는 CSS로 이 묶음만 아래로 옮겨 제목 옆에 맞춘다 -->
+  <g class="ha-dest">
+    <g class="ha-trails" stroke="url(#ha-trail)" fill="none" stroke-linecap="round">${trailMarkup}</g>
 
-  <g class="ha-light">
-    <circle cx="${BASE.x}" cy="${BASE.y}" r="125" fill="url(#ha-light)" />
-    <ellipse cx="${BASE.x}" cy="${BASE.y}" rx="96" ry="16" fill="none" stroke="#7fe6ff" stroke-opacity="0.6" stroke-width="1.2" />
-    <ellipse cx="${BASE.x}" cy="${BASE.y}" rx="150" ry="26" fill="none" stroke="#47a8ff" stroke-opacity="0.25" stroke-width="1" />
-  </g>
+    <g class="ha-light">
+      <circle cx="${BASE.x}" cy="${BASE.y}" r="125" fill="url(#ha-light)" />
+      <ellipse cx="${BASE.x}" cy="${BASE.y}" rx="96" ry="16" fill="none" stroke="#7fe6ff" stroke-opacity="0.6" stroke-width="1.2" />
+      <ellipse cx="${BASE.x}" cy="${BASE.y}" rx="150" ry="26" fill="none" stroke="#47a8ff" stroke-opacity="0.25" stroke-width="1" />
+    </g>
 
-  <g class="ha-bldg">
-    <g class="ha-bldg__glow" filter="url(#ha-blur)">${bldg.outline}</g>
-    <g class="ha-bldg__body">${bldg.outline}</g>
-    <g class="ha-bldg__grid">${bldg.grid}</g>
-    <g class="ha-bldg__sign">${bldg.sign}</g>
-    <g class="ha-bldg__wins">${bldg.wins}</g>
+    <g class="ha-bldg">
+      <g class="ha-bldg__glow" filter="url(#ha-blur)">${bldg.outline}</g>
+      <g class="ha-bldg__body">${bldg.outline}</g>
+      <g class="ha-bldg__grid">${bldg.grid}</g>
+      <g class="ha-bldg__sign">${bldg.sign}</g>
+      <g class="ha-bldg__wins">${bldg.wins}</g>
+    </g>
+    <ellipse class="ha-ripple" cx="${BASE.x}" cy="${BASE.y}" rx="70" ry="12" />
   </g>
-  <ellipse class="ha-ripple" cx="${BASE.x}" cy="${BASE.y}" rx="70" ry="12" />
 </svg>`;
   }
 
