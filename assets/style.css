@@ -207,14 +207,26 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .ha-dust { fill: #9fdcff; }
 .trail--still { opacity: 0.5; }
 .trail--flow { stroke-dasharray: 2 23; animation: ha-flow 2.8s linear infinite; }
-.trail--pulse { stroke-dasharray: 70 1100; animation: ha-pulse 5.5s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+/* 펄스: 경로 시작 직전(--from)에서 끝을 지나칠 때(--to)까지 한 번에 이동 — 값은 hero-art.js가 경로 길이로 정함 */
+.trail--pulse { stroke-dasharray: 90 1300; animation: ha-pulse var(--dur, 7s) cubic-bezier(0.42, 0, 0.9, 0.75) infinite; }
 .ha-light { animation: ha-glow 3.6s ease-in-out infinite alternate; }
 @keyframes ha-flow { to { stroke-dashoffset: -250; } }
-@keyframes ha-pulse { from { stroke-dashoffset: 1170; } to { stroke-dashoffset: 0; } }
+@keyframes ha-pulse { from { stroke-dashoffset: var(--from, 90); } to { stroke-dashoffset: var(--to, -1300); } }
 @keyframes ha-glow { from { opacity: 0.75; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .trail--flow, .trail--pulse, .ha-light { animation: none; }
+  .trail--pulse { stroke-dasharray: none; opacity: 0.5; }
 }
+
+/* 빛줄기가 도착하는 건물 (선 그림) */
+.ha-bldg__body > * { fill: #0b1a3a; stroke: #7fe6ff; stroke-opacity: 0.75; stroke-width: 1; stroke-linejoin: round; }
+.ha-bldg__glow { opacity: 0; }
+.ha-bldg__glow > * { fill: none; stroke: #d2f7ff; stroke-width: 3.5; }
+.ha-bldg__grid { stroke: #7fe6ff; stroke-opacity: 0.22; stroke-width: 0.8; }
+.ha-bldg__sign rect { fill: none; stroke: #7fe6ff; stroke-opacity: 0.45; stroke-width: 0.8; }
+.ha-bldg__sign circle { fill: #bff3ff; opacity: 0.6; }
+.ha-win { fill: #bff3ff; }
+.ha-ripple { fill: none; stroke: #9eeaff; stroke-width: 1.4; opacity: 0; transform-box: fill-box; transform-origin: center; }
 
 @media (min-width: 900px) {
   .stage__art { bottom: 0; height: auto; -webkit-mask-image: none; mask-image: none; }

@@ -11,13 +11,13 @@
  * ===================================================================== */
 window.EVAL_CONFIG = {
   /* ── 행사 정보 ─────────────────────────────────────────────── */
-  eventTitle: "제3회 융합의학연수생 학술제",
+  eventTitle: "제4회 융합의학과 학술제",
 
   /* ── 심사위원 첫 화면 문구 ───────────────────────────────────── */
   hero: {
     org: "서울대학교병원 융합의학과",
     orgEn: "Department of Transdisciplinary Medicine",  // 단어 첫 글자(D·T·M)가 강조됩니다
-    tagline: "의료의 미래, 융합으로 확장하다",
+    tagline: "융합, 이제 깊이로",
     display: "DTM",
     displaySub: "ACADEMIC FESTIVAL"
   },
