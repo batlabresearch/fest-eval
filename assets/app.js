@@ -91,7 +91,9 @@
   }
 
   // 휴대폰 뒤로가기를 누르면 사이트를 벗어나지 않고 첫 화면으로 돌아간다
+  // (발표 순서 목록이 열려 있으면 목록만 닫는다)
   window.addEventListener("popstate", () => {
+    if (!scheduleEl.hidden) { hideSchedule(); return; }
     if (!screens.start.hidden) return;
     renderStart();
     showScreen("start");
@@ -461,6 +463,83 @@
     }
     renderStart({ judge: state ? state.judge : undefined, type: state ? state.type : undefined });
     showScreen("start");
+  });
+
+  /* ── 발표 순서 · 시간 ─────────────────────────────────────── */
+  const scheduleEl = $("#schedule");
+  let scheduleReturnFocus = null;
+
+  const splitRange = (range) => String(range || "").split(/\s*[-–~]\s*/).filter(Boolean);
+  const toMinutes = (hhmm) => {
+    const m = /(\d{1,2}):(\d{2})/.exec(hhmm || "");
+    return m ? Number(m[1]) * 60 + Number(m[2]) : Infinity;
+  };
+
+  // 부문마다 하나의 세션으로 묶고 시작 시각 순서로 정렬 (포스터 11:00 → 신입 13:00 → …)
+  function sessions() {
+    const list = [];
+    typeKeys.forEach((type) => {
+      const t = config.types[type];
+      t.categories.forEach((cat) => {
+        const own = cat.presenters.map((p) => splitRange(p.time)).filter((r) => r.length);
+        const span = cat.time ? splitRange(cat.time)
+          : own.length ? [own[0][0], own[own.length - 1][1] || own[own.length - 1][0]] : [];
+        list.push({ typeLabel: t.label, label: cat.label, start: span[0] || "", end: span[1] || "", shared: !own.length, presenters: cat.presenters });
+      });
+    });
+    return list.sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+  }
+
+  function renderSchedule() {
+    $("#schedule-body").innerHTML = sessions().map((s) => `
+      <section class="sess${s.shared ? " sess--shared" : ""}">
+        <header class="sess__head">
+          ${s.start ? `<p class="sess__time">${escapeHtml(s.start)}${s.end ? `–${escapeHtml(s.end)}` : ""}</p>` : ""}
+          <div class="sess__title">
+            <h3 class="sess__name">${escapeHtml(s.label)}</h3>
+            <span class="sess__meta">${escapeHtml(s.typeLabel)} · ${s.presenters.length}명</span>
+          </div>
+        </header>
+        <ol class="sess__list">
+          ${s.presenters.map((p, i) => `
+            <li class="slot">
+              <span class="slot__no">${pad2(i + 1)}</span>
+              <span class="slot__time">${escapeHtml(splitRange(p.time)[0] || "")}</span>
+              <div>
+                <p class="slot__who"><b>${escapeHtml(p.name)}</b>${p.advisor ? `<span>지도교수 ${escapeHtml(p.advisor)}</span>` : ""}</p>
+                ${p.topic ? `<p class="slot__topic">${escapeHtml(p.topic)}</p>` : ""}
+              </div>
+            </li>`).join("")}
+        </ol>
+      </section>`).join("");
+  }
+
+  function openSchedule() {
+    renderSchedule();
+    scheduleReturnFocus = document.activeElement;
+    scheduleEl.hidden = false;
+    document.body.classList.add("is-locked");
+    $("#schedule-body").scrollTop = 0;
+    history.pushState({ screen: "schedule" }, "");   // 휴대폰 뒤로가기로도 닫히게
+    $("#schedule-close").focus();
+  }
+
+  function hideSchedule() {
+    scheduleEl.hidden = true;
+    document.body.classList.remove("is-locked");
+    if (scheduleReturnFocus && scheduleReturnFocus.focus) scheduleReturnFocus.focus();
+  }
+
+  function closeSchedule() {
+    if (history.state && history.state.screen === "schedule") history.back();   // popstate에서 닫힘
+    else hideSchedule();
+  }
+
+  $("#schedule-open").addEventListener("click", openSchedule);
+  $("#schedule-close").addEventListener("click", closeSchedule);
+  scheduleEl.addEventListener("click", (e) => { if (e.target === scheduleEl) closeSchedule(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !scheduleEl.hidden && !document.querySelector(".modal-backdrop")) closeSchedule();
   });
 
   /* ── 대화상자 ─────────────────────────────────────────────── */

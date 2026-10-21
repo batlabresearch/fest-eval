@@ -40,8 +40,12 @@ window.EVAL_CONFIG = {
    *
    *  criteria   : 평가항목 { label: 항목명, max: 배점, points: 등급별 점수 }
    *  commentLabel: 발표자별 자유 서술 칸 이름
-   *  categories : 부문 목록. 부문마다 발표자 { name: 이름, topic: 발표주제 }
-   *               발표자를 추가하려면 { name: "...", topic: "..." }, 한 줄을 더 쓰면 됩니다.
+   *  categories : 부문 목록. 부문마다 발표자
+   *               { name: 이름, topic: 발표주제, advisor: 지도교수, time: "13:00 - 13:20" }
+   *               포스터처럼 모두 같은 시간대면 부문에 time을 한 번만 적습니다.
+   *               발표자를 추가하려면 같은 형식으로 한 줄을 더 쓰면 됩니다. 순서대로 화면에 나옵니다.
+   *               제목 안의 \n 은 줄바꿈입니다 (국문·영문 제목을 두 줄로 쓸 때).
+   *               첫 화면의 [발표 순서 · 시간 보기]는 이 time 값으로 시간순 목록을 만듭니다.
    */
   types: {
     oral: {
@@ -59,24 +63,27 @@ window.EVAL_CONFIG = {
         {
           label: "신입 연수생(석사트랙)",
           presenters: [
-            { name: "김재영", topic: "하지 근력 평가를 위한 회전축 전환형 로드셀 기반 등척성 휴대용 다이나모미터" }
+            { name: "연제혁", topic: "Longitudinal Immune Profiling Following Shingrix Vaccination", advisor: "나이랑", time: "13:00 - 13:20" },
+            { name: "김예승", topic: "디지털의료기기 인허가 내비게이터: 디지털의료제품법 기반 제조사 중심 의사결정 경로 개발", advisor: "이사람", time: "13:20 - 13:40" },
+            { name: "김영민", topic: "X-ray 영상 인코더의 특징 표현 분해를 통한 임상적 소견 식별", advisor: "김영곤", time: "13:40 - 14:00" },
+            { name: "최지연", topic: "Development and application of untargeted metabolomics and lipidomics platform based on high-resolution mass spectrometry", advisor: "한도현", time: "14:00 - 14:20" },
+            { name: "홍우솔", topic: "Establishment of PARP Inhibitor-Resistant Ovarian Cancer Cell Lines and Development of 3D Spheroid Models for MS-Based Quantitative Proteomic Analysis", advisor: "한도현", time: "14:20 - 14:40" }
           ]
         },
         {
           label: "우수연구성과 부문",
           presenters: [
-            { name: "정서이", topic: "부비동 CT 스캔을 이용한 딥러닝 기반 폐쇄성 수면무호흡증 예측" },
-            { name: "김동영", topic: "Automated AI based Identification of Autism Spectrum Disorder from Home Video" },
-            { name: "강동수", topic: "망간-아연-산화철 (Mn0.5Zn0.5Fe2O4) 초자성 나노물질을 이용한 뇌종양 테라노스틱 치료기법" },
-            { name: "정수민", topic: "비심장수술 후 급성신장손상 예측을 위한 수술 중 생체신호 기반 딥러닝 알고리즘 연구" }
+            { name: "강동균", topic: "Prediction of antibiotic-associated cutaneous adverse drug reactions using electronic health record foundation models", advisor: "김광수", time: "15:00 - 15:20" },
+            { name: "이윤흠", topic: "1-D Collocated Dual-Gradient Sensory Fibers for Comprehensive Sensing and Decoding of Complex Human Motion and Physiology", advisor: "박성준", time: "15:20 - 15:40" }
           ]
         },
         {
           label: "융합의학과 코어랩 협업 부문",
           presenters: [
-            { name: "류예나", topic: "무릎 관절염 진단보조 UI 효과의 차이: 일반인의 효율성과 전문가의 적응" },
-            { name: "박홍범", topic: "Proteomic Profiling of Extracellular Vesicles: Insights into Disease Pathogenesis" },
-            { name: "윤조앤", topic: "자동화된 전립선 초음파 검사를 위한 인공지능 통합형 로봇시스템 개발에 관한 연구" }
+            { name: "최승재", topic: "전주기의료기기연구센터 시제품제작지원 (진료, 연구지원) 소개", advisor: "조민우", time: "15:40 - 16:00" },
+            { name: "정서이", topic: "Leveraging augmented reality for dynamic guidance in 3-dimensional laparoscopic and robotic liver surgery: a prospective case series study", advisor: "공현중", time: "16:00 - 16:20" },
+            { name: "류예나", topic: "AI 보조 인터페이스와 슬관절 골관절염 판독: 사용자 전문성에 따른 차이", advisor: "이사람", time: "16:20 - 16:40" },
+            { name: "안세윤", topic: "Development of a PVA/Alginate Microneedles for Localized Drug Delivery and Hindlimb Ischemia Regeneration", advisor: "정지홍", time: "16:40 - 17:00" }
           ]
         }
       ]
@@ -95,14 +102,36 @@ window.EVAL_CONFIG = {
       categories: [
         {
           label: "포스터 발표",
+          time: "11:00 - 12:30",
           presenters: [
-            { name: "이창훈", topic: "" },
-            { name: "이현지", topic: "" },
-            { name: "장보아", topic: "" },
-            { name: "정수빈", topic: "" },
-            { name: "최승재", topic: "" },
-            { name: "최준희", topic: "" },
-            { name: "한승희", topic: "" }
+            { name: "오주민", topic: "Anti-VEGF-Loaded Hydrogel for Suppressing Bone Bridge Formation Following Growth Plate Injury", advisor: "정지홍" },
+            { name: "전우진", topic: "fMRI 호환 가능 멀티모달 탄소나노튜브 신경 인터페이스\nAn fMRI-Compatible Implantable Multimodal CNT Neural Interface", advisor: "박성준" },
+            { name: "김도현", topic: "An Implantable Neural Stimulator with Adjustable Compliance Supply and Constant-Current Stimulation", advisor: "백창훈" },
+            { name: "이지영", topic: "칫솔질 빈도와 우울증 발생의 연관성: 국민건강보험공단 건강검진코호트 연구", advisor: "김성민" },
+            { name: "강대홍", topic: "진료 환경에서의 짧은 보행 및 방향 전환 영상을 이용해 보행 및 균형 기능 평가를 위한 AI Agent 시스템 개발", advisor: "공현중" },
+            { name: "이채원", topic: "대사기능 장애 관련 지방간 질환(MASLD) 및 제2형 당뇨를 동반한 고령층에서의 부정맥 발생 위험에 대한 당뇨 약제 계열 간 비교", advisor: "김성민" },
+            { name: "김인호", topic: "증강현실 Headset 기기를 이용한 '앉았다 일어서기' 검사에서 완전/불완전 기립 동작 감지 모델 개발\nDevelopment of a Model for Detecting Complete and Incomplete Stand-Ups in the Sit-to-Stand Test Using an Augmented Reality Headset", advisor: "공현중" },
+            { name: "김재영", topic: "Is the Contralateral Limb Really Unaffected in Unilateral Knee Osteoarthritis? An IMU–OpenSim Musculoskeletal Analysis", advisor: "조민우" },
+            { name: "김은서", topic: "Convergent MTBR-centered tau proteolysis across mouse tauopathy models and human Alzheimer’s disease implicates cathepsin B", advisor: "한도현" },
+            { name: "박홍범", topic: "레이저 미세절제 기반 공간 단백체 분석을 통한 신장 손상 동물 모델의 공간 특이적 단백질 변화 규명", advisor: "한도현" },
+            { name: "김태윤", topic: "공개 심전도 1,122만 건으로 자기지도 사전학습한 파운데이션 모델의 소아 전이 성능", advisor: "김광수" },
+            { name: "이태훈", topic: "종단 안저영상을 이용한 향후 당뇨병 발생 예측을 위한 딥러닝 모델 개발", advisor: "김영곤" },
+            { name: "김형섭", topic: "GeneRAG: A Retrieval-Augmented Framework for Spatially Resolved Gene Expression Prediction", advisor: "김경수" },
+            { name: "서현엽", topic: "Self-packaged stretchable printed circuits with ligand-bound liquid metal particles in elastomer", advisor: "박성준" },
+            { name: "강성준", topic: "Towards Seamless Surgical Flow: A Vision-Based Robotic Scrub Nurse for Instrument Handover and Organization", advisor: "백창훈" },
+            { name: "신채호", topic: "전역 맥락과 국소 EHR 이벤트에 기반한 근거 인용 임상 추론 언어모델 개발", advisor: "김광수" },
+            { name: "박재현", topic: "이상 탐지를 이용한 말단 흑색종의 재발 관련 조직형태학적 분석", advisor: "김영곤" },
+            { name: "김나현", topic: "Rac1-enriched extracellular vesicles promote regenerative remodeling during skin wound healing", advisor: "나이랑" },
+            { name: "강주혁", topic: "연속·무선 생화학 모니터링을 위한 피부 밀착형 마이크로니들 플랫폼", advisor: "이원령" },
+            { name: "이지평", topic: "Comparison of Large Language Models and Medical Experts for Preoperative Anesthetic Assessment Summarization", advisor: "이현훈" },
+            { name: "김경연", topic: "A Conformable Multimodal Skin Marker for CT–MRI Fusion and Infrared-Guided Robotic Tumor Localization", advisor: "이원령" },
+            { name: "이동환", topic: "OFF-CLIP: Improving Normal Detection Confidence in Radiology CLIP with Simple Off-Diagonal Term Auto-Adjustment", advisor: "김경수" },
+            { name: "윤조앤", topic: "저강도 집속초음파 뇌 자극 치료의 자극 위치 유지를 위한 초음파 트랜스듀서의 위치 조정 자동화에 관한 연구", advisor: "방영봉" },
+            { name: "김별하나", topic: "HELPER: Painless Fe3+-Specific GelMA Hydrogel Microneedle Patch for Remote Management of Transfusion-induced Iron Overload", advisor: "정지홍" },
+            { name: "김형석", topic: "LLM 기반 Observational Medical Outcomes Partnership Common Data Model(OMOP CDM) Text-to-SQL 시스템", advisor: "이현훈" },
+            { name: "김예린", topic: "미세수술을 위한 정밀 조작 및 힘 측정이 가능한 소형·경량 그리퍼 모듈 개발", advisor: "방영봉" },
+            { name: "이예지", topic: "Reproducibility of Carotenoid-Related Skin Yellowness Measurement across Finger Site, Hand Dominance, and Test Day", advisor: "조민우" },
+            { name: "강동수", topic: "Ontogeny-Dependent Myeloid Programs Differentially Shape Lipid Handling in Established Alzheimer’s Disease", advisor: "나이랑" }
           ]
         }
       ]
