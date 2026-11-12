@@ -81,9 +81,9 @@ window.EVAL_CONFIG = {
           label: "융합의학과 코어랩 협업 부문",
           presenters: [
             { name: "최승재", topic: "전주기의료기기연구센터 시제품제작지원 (진료, 연구지원) 소개", advisor: "조민우", time: "15:40 - 16:00" },
-            { name: "정서이", topic: "Leveraging augmented reality for dynamic guidance in 3-dimensional laparoscopic and robotic liver surgery: a prospective case series study", advisor: "공현중", time: "16:00 - 16:20" },
+            { name: "정서이", topic: "의료 XR·의료영상·Physical AI 융합 연구 플랫폼 구축과 임상 적용", advisor: "공현중", time: "16:00 - 16:20" },
             { name: "류예나", topic: "AI 보조 인터페이스와 슬관절 골관절염 판독: 사용자 전문성에 따른 차이", advisor: "이사람", time: "16:20 - 16:40" },
-            { name: "안세윤", topic: "Development of a PVA/Alginate Microneedles for Localized Drug Delivery and Hindlimb Ischemia Regeneration", advisor: "정지홍", time: "16:40 - 17:00" }
+            { name: "안세윤", topic: "Development of a PVA/Alginate Microneedles Patch for Localized Drug Delivery and Hindlimb Ischemic Tissue Regeneration", advisor: "정지홍", time: "16:40 - 17:00" }
           ]
         }
       ]
@@ -106,7 +106,7 @@ window.EVAL_CONFIG = {
           presenters: [
             { name: "오주민", topic: "Anti-VEGF-Loaded Hydrogel for Suppressing Bone Bridge Formation Following Growth Plate Injury", advisor: "정지홍" },
             { name: "전우진", topic: "fMRI 호환 가능 멀티모달 탄소나노튜브 신경 인터페이스\nAn fMRI-Compatible Implantable Multimodal CNT Neural Interface", advisor: "박성준" },
-            { name: "김도현", topic: "An Implantable Neural Stimulator with Adjustable Compliance Supply and Constant-Current Stimulation", advisor: "백창훈" },
+            { name: "김도현", topic: "A Compact Neural Stimulator with Adjustable Compliance Supply and Constant-Current Stimulation", advisor: "백창훈" },
             { name: "이지영", topic: "칫솔질 빈도와 우울증 발생의 연관성: 국민건강보험공단 건강검진코호트 연구", advisor: "김성민" },
             { name: "강대홍", topic: "진료 환경에서의 짧은 보행 및 방향 전환 영상을 이용해 보행 및 균형 기능 평가를 위한 AI Agent 시스템 개발", advisor: "공현중" },
             { name: "이채원", topic: "대사기능 장애 관련 지방간 질환(MASLD) 및 제2형 당뇨를 동반한 고령층에서의 부정맥 발생 위험에 대한 당뇨 약제 계열 간 비교", advisor: "김성민" },
@@ -114,7 +114,7 @@ window.EVAL_CONFIG = {
             { name: "김재영", topic: "Is the Contralateral Limb Really Unaffected in Unilateral Knee Osteoarthritis? An IMU–OpenSim Musculoskeletal Analysis", advisor: "조민우" },
             { name: "김은서", topic: "Convergent MTBR-centered tau proteolysis across mouse tauopathy models and human Alzheimer’s disease implicates cathepsin B", advisor: "한도현" },
             { name: "박홍범", topic: "레이저 미세절제 기반 공간 단백체 분석을 통한 신장 손상 동물 모델의 공간 특이적 단백질 변화 규명", advisor: "한도현" },
-            { name: "김태윤", topic: "공개 심전도 1,122만 건으로 자기지도 사전학습한 파운데이션 모델의 소아 전이 성능", advisor: "김광수" },
+            { name: "김태윤", topic: "가변 리드 심전도 파운데이션 모델을 위한 리드 내부 및 리드 간 표현 학습", advisor: "김광수" },
             { name: "이태훈", topic: "종단 안저영상을 이용한 향후 당뇨병 발생 예측을 위한 딥러닝 모델 개발", advisor: "김영곤" },
             { name: "김형섭", topic: "GeneRAG: A Retrieval-Augmented Framework for Spatially Resolved Gene Expression Prediction", advisor: "김경수" },
             { name: "서현엽", topic: "Self-packaged stretchable printed circuits with ligand-bound liquid metal particles in elastomer", advisor: "박성준" },
