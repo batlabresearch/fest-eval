@@ -73,8 +73,8 @@ window.EVAL_CONFIG = {
         {
           label: "우수연구성과 부문",
           presenters: [
-            { name: "강동균", topic: "Prediction of antibiotic-associated cutaneous adverse drug reactions using electronic health record foundation models", advisor: "김광수", time: "15:00 - 15:20" },
-            { name: "이윤흠", topic: "1-D Collocated Dual-Gradient Sensory Fibers for Comprehensive Sensing and Decoding of Complex Human Motion and Physiology", advisor: "박성준", time: "15:20 - 15:40" }
+            { name: "강동균", topic: "Prediction of antibiotic-associated cutaneous adverse drug reactions using electronic health record foundation models", advisor: "김광수", time: "14:40 - 15:00" },
+            { name: "이윤흠", topic: "1-D Collocated Dual-Gradient Sensory Fibers for Comprehensive Sensing and Decoding of Complex Human Motion and Physiology", advisor: "박성준", time: "15:00 - 15:20" }
           ]
         },
         {
